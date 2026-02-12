@@ -55,7 +55,7 @@ If the tool returns `"needsGame": true`, **ask the user** which game it was — 
 Once you have the required info and the user confirms (or tells you to post), run the tool **immediately**:
 
 ```bash
-bash {baseDir}/tools/post.sh "<character_name>" "<level>" "[game_name]"
+bash /home/marvin/.openclaw/skills/boneyard/tools/post.sh "<character_name>" "<level>" "[game_name]"
 ```
 
 **Arguments:**
@@ -74,7 +74,7 @@ The tool posts directly to the boneyard memorial channel. **Do NOT ask which cha
 Confirm, then run immediately:
 
 ```bash
-bash {baseDir}/tools/post.sh "Thorn Ironheart" "7" "Where Evil Lives"
+bash /home/marvin/.openclaw/skills/boneyard/tools/post.sh "Thorn Ironheart" "7" "Where Evil Lives"
 ```
 
 ### User says "post it"
@@ -96,7 +96,7 @@ Ask: *"Which game was Kael in? I can try to detect it from the current Discord e
 Run without game arg (triggers auto-detection):
 
 ```bash
-bash {baseDir}/tools/post.sh "Kael" "4"
+bash /home/marvin/.openclaw/skills/boneyard/tools/post.sh "Kael" "4"
 ```
 
 ### TPK (multiple deaths)
