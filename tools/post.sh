@@ -5,6 +5,7 @@ set -euo pipefail
 # Usage: post.sh <character_name> <level> [game_name]
 #
 # Posts a themed embed to the boneyard channel honoring a fallen character.
+# Uses the discord-embed skill's send-embed.sh to deliver the message.
 # If game_name is omitted, attempts to infer it from active Discord scheduled events.
 #
 # Returns JSON:
@@ -18,6 +19,14 @@ GAME_NAME="${3:-}"
 
 BONEYARD_CHANNEL="1299781078931869716"
 API="https://discord.com/api/v10"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+
+# Resolve send-embed.sh from sibling discord-embed skill
+SEND_EMBED="${SCRIPT_DIR}/../../discord-embed/tools/send-embed.sh"
+if [[ ! -f "$SEND_EMBED" ]]; then
+  echo '{"error":"discord-embed skill not found. Cannot send embed."}' >&2
+  exit 1
+fi
 
 # --- Environment checks ---
 
@@ -86,7 +95,7 @@ sys.exit(1)
   fi
 fi
 
-# --- Build embed ---
+# --- Build embed JSON ---
 
 NOW_ISO=$(date -u +"%Y-%m-%dT%H:%M:%S.000Z")
 
@@ -114,36 +123,6 @@ embed = {
 print(json.dumps(embed))
 ")
 
-# --- Send to boneyard channel (retry once on transient failure) ---
+# --- Send via discord-embed skill ---
 
-PAYLOAD=$(printf '{"embeds":[%s]}' "$EMBED")
-
-RESPONSE=""
-for _attempt in 1 2; do
-  RESPONSE=$(curl -sf --connect-timeout 5 --max-time 15 \
-    -X POST \
-    -H "$AUTH" \
-    -H "Content-Type: application/json" \
-    -d "$PAYLOAD" \
-    "${API}/channels/${BONEYARD_CHANNEL}/messages" 2>&1) && break
-  if [[ $_attempt -eq 1 ]]; then
-    sleep 1
-  else
-    echo "{\"error\":\"Discord API request failed after 2 attempts\",\"details\":\"$RESPONSE\"}" >&2
-    exit 1
-  fi
-done
-
-# --- Return result ---
-
-echo "$RESPONSE" | python3 -c "
-import sys, json
-try:
-    msg = json.load(sys.stdin)
-    if msg.get('id'):
-        print(json.dumps({'ok': True, 'messageId': msg['id'], 'channelId': '${BONEYARD_CHANNEL}'}))
-    else:
-        print(json.dumps({'ok': False, 'error': msg.get('message', 'Unknown Discord error'), 'raw': msg}))
-except Exception as e:
-    print(json.dumps({'ok': True, 'raw': 'sent'}))
-"
+bash "$SEND_EMBED" "$BONEYARD_CHANNEL" "$EMBED"
